@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}My Notes{% endblock %}
+
+{% block content %}
+
+<h2>My Notes</h2> <form method="POST"> <input name="title" placeholder="Title"><br><br> <textarea name="content" placeholder="Write note here" rows="6" cols="40"></textarea><br><br> <button type="submit">Save</button> </form> <h3>Saved Notes</h3>
+
+{% if notes %}
+
+<ul> {% for n in notes %} <li> {{ n.title }} ({{ n.created_at }}) <a href="/notes/{{ n.id }}">Open</a> </li> {% endfor %} </ul> {% else %} <p>No notes yet.</p> {% endif %} <p><a href="/dashboard">Back</a></p> {% endblock %}
