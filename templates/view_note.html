@@ -4,4 +4,4 @@
 
 {% block content %}
 
-<h2>{{ title }}</h2> <p>{{ created_at }}</p> <pre>{{ content }}</pre> <p><a href="/notes">Back to notes</a></p> {% endblock %}
+<h2>{{ title }}</h2> <p>{{ created_at }}</p> <pre>{{ content }}</pre> <p><a href="{{ url_for('notes.notes') }}">Back to notes</a></p> {% endblock %}

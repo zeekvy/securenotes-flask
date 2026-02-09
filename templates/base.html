@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}SecureNotes{% endblock %}</title>
+  <title>{% block title %}SecureNotes{% endblock %}</title>
 </head>
-
 <body>
 
-{% block content %}
-{% endblock %}
+  {% if session.get('user_id') %}
+    <nav>
+      <a href="{{ url_for('notes.dashboard') }}">Dashboard</a>
+      |
+      <a href="{{ url_for('activity.history') }}">Activity History</a>
+      |
+      <a href="{{ url_for('auth.logout') }}">Logout</a>
+    </nav>
+    <hr>
+  {% endif %}
+
+  {% block content %}
+  {% endblock %}
 
 </body>
 </html>

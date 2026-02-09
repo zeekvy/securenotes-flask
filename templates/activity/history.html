@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Activity History{% endblock %}
+
+{% block content %}
+<h1>Activity History</h1>
+
+{% if activities %}
+  <div>
+    {% for a in activities %}
+      <div style="border:1px solid #ccc; padding:12px; margin:10px 0;">
+        <div>Activity Type: {{ a.event_type }}</div>
+        <div>Timestamp: {{ a.created_at }}</div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No activity yet.</p>
+{% endif %}
+
+<p><a href="{{ url_for('notes.dashboard') }}">Back to dashboard</a></p>
+{% endblock %}

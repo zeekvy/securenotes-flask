@@ -1,45 +1,12 @@
-from flask import Blueprint, request, redirect, url_for, session
-from flask_bcrypt import Bcrypt
+# auth/routes.py
+
+from flask import Blueprint, render_template, request, redirect, url_for, session
+import bcrypt
+
 from db import get_db_connection
-from flask import render_template
+from activity.logger import log_activity
 
 auth_bp = Blueprint("auth", __name__)
-bcrypt = Bcrypt()
-
-@auth_bp.record_once
-def init(state):
-    bcrypt.init_app(state.app)
-
-@auth_bp.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "GET":
-        return render_template("register.html")
-
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
-    if len(password) < 8:
-        return "Password must be at least 8 characters", 400
-    if len(email) > 255:
-        return "Email too long", 400
-    weak = {"password", "12345678", "qwerty123", "password123"}
-    if password.strip().lower() in weak:
-        return "Password too common", 400
-
-   
-
-    pw_hash = bcrypt.generate_password_hash(password).decode("utf-8")
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO users (email, password_hash) VALUES (%s, %s)",
-        (email, pw_hash),
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return redirect(url_for("auth.login"))
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -49,25 +16,97 @@ def login():
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, password_hash FROM users WHERE email = %s", (email,))
-    row = cur.fetchone()
+    if not email or not password:
+        return "Email and password required", 400
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+
+    cur.execute(
+        "SELECT id, password_hash FROM users WHERE email = %s",
+        (email,)
+    )
+    user = cur.fetchone()
+
     cur.close()
-    conn.close()
+    db.close()
 
-    if not row:
-        return "Invalid login", 401
+    if not user:
+        return "Invalid email or password", 401
 
-    user_id, pw_hash = row[0], row[1]
+    stored = user.get("password_hash")
+    if not stored:
+        return "Invalid email or password", 401
 
-    if not bcrypt.check_password_hash(pw_hash, password):
-        return "Invalid login", 401
+    stored_hash = stored if isinstance(stored, (bytes, bytearray)) else str(stored).encode("utf-8")
 
-    session["user_id"] = user_id
-    return redirect("/dashboard")
+    if not bcrypt.checkpw(password.encode("utf-8"), stored_hash):
+        return "Invalid email or password", 401
+
+    session["user_id"] = user["id"]
+    log_activity("user_login")
+
+    return redirect(url_for("notes.dashboard"))
+
+
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "GET":
+        return render_template("register.html")
+
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+    confirm = request.form.get("confirm_password", "")
+
+    if not email:
+        return "Email required", 400
+    if len(email) > 255:
+        return "Email too long", 400
+    if not password:
+        return "Password required", 400
+    if len(password) < 8:
+        return "Password must be at least 8 characters", 400
+    if password != confirm:
+        return "Passwords do not match", 400
+
+    weak = {"password", "12345678", "qwerty123", "password123"}
+    if password.strip().lower() in weak:
+        return "Password too common", 400
+
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+
+    cur.execute(
+        "SELECT id FROM users WHERE email = %s",
+        (email,)
+    )
+    existing = cur.fetchone()
+    if existing:
+        cur.close()
+        db.close()
+        return "Email already registered", 400
+
+    password_hash = bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
+    cur.execute(
+        "INSERT INTO users (email, password_hash) VALUES (%s, %s)",
+        (email, password_hash)
+    )
+    db.commit()
+
+    cur.close()
+    db.close()
+
+    return redirect(url_for("auth.login"))
+
 
 @auth_bp.route("/logout")
 def logout():
+    if session.get("user_id"):
+        log_activity("user_logout")
+
     session.clear()
-    return redirect("/login")
+    return redirect(url_for("auth.login"))

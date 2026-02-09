@@ -4,4 +4,4 @@
 
 {% block content %}
 
-<h2>Dashboard</h2> <p>You are logged in.</p> <p><a href="/notes">My notes</a></p> <p><a href="/logout">Logout</a></p> {% endblock %}
+<h2>Dashboard</h2> <p>You are logged in.</p> <p><a href="{{ url_for('notes.notes') }}">My notes</a></p> <p><a href="{{ url_for('auth.logout') }}">Logout</a></p> {% endblock %}
