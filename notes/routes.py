@@ -75,3 +75,61 @@ title=title,
 content=content,
 created_at=created_at
 )
+    
+@notes_bp.route("/notes/<int:note_id>/edit", methods=["GET", "POST"])
+def edit_note(note_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect("/login")
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        content = request.form.get("content", "").strip()
+
+        cur.execute(
+            "UPDATE notes SET title=%s, content=%s WHERE id=%s AND user_id=%s",
+            (title, content, note_id, user_id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect("/notes")
+
+    cur.execute(
+        "SELECT id, title, content FROM notes WHERE id=%s AND user_id=%s",
+        (note_id, user_id)
+    )
+    note = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not note:
+        return "Note not found", 404
+
+    return render_template("edit_note.html", note=note)
+
+
+
+@notes_bp.route("/notes/<int:note_id>/delete", methods=["POST"])
+def delete_note(note_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect("/login")
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM notes WHERE id=%s AND user_id=%s",
+        (note_id, user_id)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect("/notes")
+
+

@@ -1,11 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}My Notes{% endblock %}
-
 {% block content %}
 
-<h2>My Notes</h2> <form method="POST"> <input name="title" placeholder="Title"><br><br> <textarea name="content" placeholder="Write note here" rows="6" cols="40"></textarea><br><br> <button type="submit">Save</button> </form> <h3>Saved Notes</h3>
+<h2>My Notes</h2>
 
+<!-- Create new note -->
+<form method="POST">
+    <input name="title" placeholder="Title" required><br><br>
+
+    <textarea name="content"
+              rows="6"
+              cols="50"
+              placeholder="Write note here"
+              required></textarea><br><br>
+
+    <button type="submit">Save</button>
+</form>
+
+<hr>
+
+<!-- List notes -->
 {% if notes %}
+<ul>
+{% for n in notes %}
+    <li>
+        <strong>{{ n.title }}</strong>
+        ({{ n.created_at }})
 
-<ul> {% for n in notes %} <li> {{ n.title }} ({{ n.created_at }}) <a href="/notes/{{ n.id }}">Open</a> </li> {% endfor %} </ul> {% else %} <p>No notes yet.</p> {% endif %} <p><a href="/dashboard">Back</a></p> {% endblock %}
+        <a href="/notes/{{ n.id }}">Open</a>
+        <a href="/notes/{{ n.id }}/edit">Edit</a>
+
+        <form method="POST" action="/notes/{{ n.id }}/delete" style="display:inline;">
+    <button type="submit">Delete</button>
+</form>
+
+    </li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No notes yet.</p>
+{% endif %}
+
+<p><a href="/dashboard">Back</a></p>
+
+{% endblock %}
