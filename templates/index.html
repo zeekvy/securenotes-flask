@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}SecureNotes{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-center bg-glow" style="min-height:70vh;">
+  <div class="text-center card card-anim p-5 landing-anim" style="max-width:720px; width:100%;">
+    <h1 class="display-4 fw-semibold mb-3 landing-anim landing-anim-delay-1">SecureNotes</h1>
+
+    <p class="lead text-muted mb-4 landing-anim landing-anim-delay-2">
+      Encrypted personal notes. Private by design.
+    </p>
+
+    <div class="d-flex justify-content-center gap-3 landing-anim landing-anim-delay-3">
+      <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4 btn-anim">
+        Sign in
+      </a>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg px-4 btn-anim">
+        Create account
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

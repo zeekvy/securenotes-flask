@@ -4,4 +4,21 @@
 
 {% block content %}
 
-<h2>{{ title }}</h2> <p>{{ created_at }}</p> <pre>{{ content }}</pre> <p><a href="{{ url_for('notes.notes') }}">Back to notes</a></p> {% endblock %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ title }}</h1>
+    <p class="text-muted mb-0">Created {{ created_at }}</p>
+  </div>
+
+  <a href="{{ url_for('notes.notes') }}" class="btn btn-outline-light">
+    Back
+  </a>
+</div>
+
+<div class="card p-4">
+  <div style="white-space: pre-wrap;">
+    {{ content }}
+  </div>
+</div>
+
+{% endblock %}

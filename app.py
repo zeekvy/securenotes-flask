@@ -75,13 +75,15 @@ def enforce_idle_timeout():
 def add_security_headers(resp):
     resp.headers["Content-Security-Policy"] = (
     "default-src 'self'; "
-    "script-src 'self'; "
-    "style-src 'self'; "
+    "script-src 'self' https://cdn.jsdelivr.net; "
+    "style-src 'self' https://cdn.jsdelivr.net; "
     "img-src 'self' data:; "
+    "font-src 'self' https://cdn.jsdelivr.net data:; "
     "object-src 'none'; "
     "base-uri 'self'; "
     "frame-ancestors 'none'"
 )
+
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "no-referrer"
@@ -100,8 +102,8 @@ def server_error(e):
 
 # Root route
 @app.route("/")
-def home():
-    return "SecureNotes running"
+def index():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":

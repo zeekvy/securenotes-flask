@@ -3,15 +3,54 @@
 {% block title %}Edit Note{% endblock %}
 
 {% block content %}
-  <h2>Edit Note</h2>
 
-  <form method="POST"> <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input name="title" placeholder="Title" value="{{ note.title }}" required><br><br>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Edit note</h1>
+    <p class="text-muted mb-0">Update title and content.</p>
+  </div>
 
-    <textarea name="content" rows="8" cols="60" required>{{ note.content }}</textarea><br><br>
+  <a href="{{ url_for('notes.notes') }}" class="btn btn-outline-light">
+    Back
+  </a>
+</div>
 
-    <button type="submit">Save</button>
+<div class="card p-4">
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label class="form-label" for="title">Title</label>
+      <input
+        id="title"
+        name="title"
+        type="text"
+        class="form-control"
+        value="{{ note.title }}"
+        required
+      >
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="content">Content</label>
+      <textarea
+        id="content"
+        name="content"
+        class="form-control"
+        rows="12"
+        required
+      >{{ note.content }}</textarea>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <a class="btn btn-outline-light" href="{{ url_for('notes.notes') }}">
+        Cancel
+      </a>
+      <button type="submit" class="btn btn-primary">
+        Save
+      </button>
+    </div>
   </form>
+</div>
 
-  <p><a href="{{ url_for('notes.notes') }}">Back</a></p>
 {% endblock %}
