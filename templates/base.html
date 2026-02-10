@@ -18,6 +18,11 @@
 
   {% block content %}
   {% endblock %}
+<script>
+  setInterval(function () {
+    fetch("/ping", { cache: "no-store" });
+  }, 5000);
+</script>
 
 </body>
 </html>
