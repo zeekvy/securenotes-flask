@@ -3,6 +3,7 @@ from flask_wtf.csrf import CSRFProtect
 from auth import auth_bp
 from notes.routes import notes_bp
 from activity.routes import activity_bp
+from flask_wtf.csrf import generate_csrf
 
 app = Flask(__name__)
 
@@ -34,7 +35,11 @@ from flask import session, redirect, url_for, request
 
 app.permanent_session_lifetime = timedelta(minutes=15)
 
-IDLE_SECONDS = 15
+IDLE_SECONDS = 15 * 60
+
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf)
 
 @app.before_request
 def enforce_idle_timeout():

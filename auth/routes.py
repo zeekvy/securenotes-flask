@@ -3,6 +3,7 @@
 from flask import render_template, request, redirect, url_for, session
 import bcrypt
 from datetime import datetime, timedelta
+import secrets
 
 from db import get_db_connection
 from activity.logger import log_activity
@@ -11,6 +12,8 @@ from . import auth_bp
 
 MAX_FAILS = 5
 LOCK_MINUTES = 15
+
+OTP_EXP_MINUTES = 5
 
 
 def get_login_attempt(email):
@@ -75,6 +78,76 @@ def reset_attempts(email):
     db.close()
 
 
+def create_otp(user_id, email):
+    code = f"{secrets.randbelow(1000000):06d}"
+    expires_at = datetime.now() + timedelta(minutes=OTP_EXP_MINUTES)
+
+    db = get_db_connection()
+    cur = db.cursor()
+
+    cur.execute(
+        "INSERT INTO login_otp (user_id, otp_code, expires_at, used) VALUES (%s, %s, %s, 0)",
+        (user_id, code, expires_at)
+    )
+    db.commit()
+
+    cur.close()
+    db.close()
+
+    log_activity("OTP_CREATED", username=email, details="otp generated")
+
+    print("OTP for", email, "is", code)
+
+    return code
+
+
+def verify_otp(user_id, code):
+    db = get_db_connection()
+    cur = db.cursor(dictionary=True)
+
+    cur.execute(
+        """
+        SELECT id, otp_code, expires_at, used
+        FROM login_otp
+        WHERE user_id = %s
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (user_id,)
+    )
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        db.close()
+        return False, "no otp"
+
+    if row["used"]:
+        cur.close()
+        db.close()
+        return False, "otp already used"
+
+    if row["expires_at"] <= datetime.now():
+        cur.close()
+        db.close()
+        return False, "otp expired"
+
+    if str(row["otp_code"]) != str(code):
+        cur.close()
+        db.close()
+        return False, "otp mismatch"
+
+    cur.execute(
+        "UPDATE login_otp SET used = 1 WHERE id = %s",
+        (row["id"],)
+    )
+    db.commit()
+
+    cur.close()
+    db.close()
+    return True, "ok"
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
@@ -89,7 +162,7 @@ def login():
     attempt = get_login_attempt(email)
     if attempt and attempt.get("locked_until"):
         if attempt["locked_until"] > datetime.now():
-            log_activity("LOGIN_BLOCKED_LOCKOUT", username=email)
+            log_activity("LOGIN_BLOCKED_LOCKOUT", username=email, details="account locked")
             return "Account locked. Try again later.", 403
 
     db = get_db_connection()
@@ -124,10 +197,45 @@ def login():
 
     reset_attempts(email)
 
-    session["user_id"] = user["id"]
-    session["username"] = user["email"]
+    session["pending_otp_user_id"] = user["id"]
+    session["pending_otp_email"] = email
 
-    log_activity("LOGIN_SUCCESS")
+    create_otp(user["id"], email)
+
+    log_activity("LOGIN_PASSWORD_OK_2FA_REQUIRED", username=email, details="redirect to verify")
+    return redirect(url_for("auth.verify"))
+
+
+@auth_bp.route("/verify", methods=["GET", "POST"])
+def verify():
+    pending_user_id = session.get("pending_otp_user_id")
+    pending_email = session.get("pending_otp_email")
+
+    if not pending_user_id or not pending_email:
+        return redirect(url_for("auth.login"))
+
+    if request.method == "GET":
+        return render_template("verify.html", email=pending_email)
+
+    code = request.form.get("otp_code", "").strip()
+
+    if not code or len(code) != 6 or not code.isdigit():
+        log_activity("OTP_FAILED", username=pending_email, details="bad format")
+        return "Invalid code", 400
+
+    ok, reason = verify_otp(pending_user_id, code)
+    if not ok:
+        log_activity("OTP_FAILED", username=pending_email, details=reason)
+        return "Invalid or expired code", 401
+
+    session.pop("pending_otp_user_id", None)
+    session.pop("pending_otp_email", None)
+
+    session["user_id"] = pending_user_id
+    session["username"] = pending_email
+
+    log_activity("OTP_SUCCESS", user_id=pending_user_id, username=pending_email)
+    log_activity("LOGIN_SUCCESS", user_id=pending_user_id, username=pending_email)
 
     return redirect(url_for("notes.dashboard"))
 
