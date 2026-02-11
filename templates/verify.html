@@ -1,1 +1,27 @@
-<!doctype html> <html> <head> <title>Verify</title> </head> <body> <h2>Verify sign-in</h2> <p>Code sent for: {{ email }}</p> <form method="POST"> <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <label>6-digit code</label> <input type="text" name="otp_code" maxlength="6" autofocus> <button type="submit">Verify</button> </form> <p>For testing, check your terminal for the OTP.</p> </body> </html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+  <h2>Verify sign-in</h2>
+
+  <p class="muted">Code sent for: {{ email }}</p>
+
+  <form method="POST" class="auth-form" autocomplete="one-time-code">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="otp_code">6-digit code</label>
+    <input
+      id="otp_code"
+      type="text"
+      name="otp_code"
+      inputmode="numeric"
+      autocomplete="one-time-code"
+      maxlength="6"
+      pattern="[0-9]{6}"
+      autofocus
+      required
+    >
+
+    <button type="submit" class="btn">Verify</button>
+  </form>
+{% endblock %}

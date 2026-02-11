@@ -4,6 +4,11 @@ from auth import auth_bp
 from notes.routes import notes_bp
 from activity.routes import activity_bp
 from flask_wtf.csrf import generate_csrf
+from flask_mail import Mail, Message
+from dotenv import load_dotenv
+import os
+from extensions import mail
+
 
 app = Flask(__name__)
 
@@ -11,6 +16,17 @@ app = Flask(__name__)
 app.secret_key = "dev-secret-key-9f3a7c1e8b2d4a6f"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+load_dotenv()
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = app.config["MAIL_USERNAME"]
+
+mail.init_app(app)
+
 
 # CSRF protection
 csrf = CSRFProtect(app)

@@ -167,3 +167,79 @@ input:-webkit-autofill:focus{
   z-index:-1;
 }
 
+button,
+.btn {
+background-color: #3b82f6;
+color: #ffffff;
+border: none;
+padding: 10px 18px;
+border-radius: 6px;
+font-weight: 600;
+cursor: pointer;
+}
+
+button:hover,
+.btn:hover {
+background-color: #2563eb;
+}
+
+button:disabled,
+.btn:disabled {
+background-color: #475569;
+color: #cbd5e1;
+cursor: not-allowed;
+}
+
+.note-content,
+.note-content textarea,
+.note-content p {
+color: #e5e7eb;
+}
+
+.note-content textarea {
+background-color: rgba(255, 255, 255, 0.04);
+border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.note-content textarea:focus {
+outline: none;
+border-color: #3b82f6;
+background-color: rgba(255, 255, 255, 0.06);
+}
+
+.activity-subtitle {
+  color: #cbd5e1;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.activity-item {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.activity-type {
+  color: #e5e7eb;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.activity-time {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.activity-empty {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #cbd5e1;
+}

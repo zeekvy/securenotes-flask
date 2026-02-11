@@ -37,23 +37,45 @@ def notes():
 
         return redirect(url_for("notes.notes"))
 
+    q = (request.args.get("q") or "").strip()
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        "SELECT id, title, created_at FROM notes WHERE user_id = %s ORDER BY created_at DESC",
-        (user_id,),
-    )
+
+    if q:
+        like = f"%{q}%"
+        cur.execute(
+            """
+            SELECT id, title, created_at
+            FROM notes
+            WHERE user_id = %s
+              AND (title LIKE %s OR content LIKE %s)
+            ORDER BY created_at DESC
+            """,
+            (user_id, like, like),
+        )
+        log_activity("note_search")
+    else:
+        cur.execute(
+            """
+            SELECT id, title, created_at
+            FROM notes
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            """,
+            (user_id,),
+        )
+
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
     return render_template(
         "notes.html",
-        notes=[
-            {"id": r[0], "title": r[1], "created_at": r[2]}
-            for r in rows
-        ]
+        q=q,
+        notes=[{"id": r[0], "title": r[1], "created_at": r[2]} for r in rows],
     )
+
 
 
 @notes_bp.route("/notes/<int:note_id>")

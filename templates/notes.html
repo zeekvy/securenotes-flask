@@ -15,6 +15,21 @@
   </a>
 </div>
 
+<form method="get" class="d-flex gap-2 mb-3">
+  <input
+    type="text"
+    name="q"
+    value="{{ q or '' }}"
+    class="form-control"
+    placeholder="Search notes"
+  >
+  <button type="submit" class="btn">Search</button>
+
+  {% if q %}
+    <a href="{{ url_for('notes.notes') }}" class="btn btn-outline-light">Clear</a>
+  {% endif %}
+</form>
+
 <div class="row g-3">
   <div class="col-12 col-lg-5">
     <div class="card p-4">

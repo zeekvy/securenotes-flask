@@ -1,6 +1,6 @@
 # auth/routes.py
 
-from flask import render_template, request, redirect, url_for, session
+from flask import render_template, request, redirect, url_for, session, current_app
 import bcrypt
 from datetime import datetime, timedelta
 import secrets
@@ -9,6 +9,8 @@ from db import get_db_connection
 from activity.logger import log_activity
 from . import auth_bp
 
+from flask_mail import Message
+from extensions import mail
 
 MAX_FAILS = 5
 LOCK_MINUTES = 15
@@ -16,7 +18,7 @@ LOCK_MINUTES = 15
 OTP_EXP_MINUTES = 5
 
 
-def get_login_attempt(email):
+def get_login_attempt(email: str):
     db = get_db_connection()
     cur = db.cursor(dictionary=True)
 
@@ -31,7 +33,7 @@ def get_login_attempt(email):
     return row
 
 
-def upsert_fail(email):
+def upsert_fail(email: str):
     db = get_db_connection()
     cur = db.cursor(dictionary=True)
 
@@ -66,7 +68,7 @@ def upsert_fail(email):
     db.close()
 
 
-def reset_attempts(email):
+def reset_attempts(email: str):
     db = get_db_connection()
     cur = db.cursor()
     cur.execute(
@@ -78,7 +80,7 @@ def reset_attempts(email):
     db.close()
 
 
-def create_otp(user_id, email):
+def create_otp(user_id: int, email: str) -> str:
     code = f"{secrets.randbelow(1000000):06d}"
     expires_at = datetime.now() + timedelta(minutes=OTP_EXP_MINUTES)
 
@@ -95,13 +97,28 @@ def create_otp(user_id, email):
     db.close()
 
     log_activity("OTP_CREATED", username=email, details="otp generated")
-
-    print("OTP for", email, "is", code)
-
     return code
 
 
-def verify_otp(user_id, code):
+def send_otp_email(user_email: str, code: str) -> None:
+    msg = Message(
+        subject="SecureNotes verification code",
+        recipients=[user_email],
+        body=(
+            f"Your SecureNotes verification code is: {code}\n\n"
+            f"This code expires in {OTP_EXP_MINUTES} minutes."
+        ),
+    )
+
+    try:
+        mail.send(msg)
+    except Exception as e:
+        current_app.logger.exception("OTP email send failed")
+        log_activity("OTP_EMAIL_SEND_FAILED", username=user_email, details=str(e))
+        raise
+
+
+def verify_otp(user_id: int, code: str):
     db = get_db_connection()
     cur = db.cursor(dictionary=True)
 
@@ -188,21 +205,20 @@ def login():
         log_activity("LOGIN_FAILED", username=email, details="no password hash")
         return "Invalid email or password", 401
 
-    stored_hash = stored.encode("utf-8")
-
-    if not bcrypt.checkpw(password.encode("utf-8"), stored_hash):
+    if not bcrypt.checkpw(password.encode("utf-8"), stored.encode("utf-8")):
         upsert_fail(email)
         log_activity("LOGIN_FAILED", username=email, details="invalid password")
         return "Invalid email or password", 401
 
     reset_attempts(email)
 
+    otp_code = create_otp(user["id"], email)
+    send_otp_email(email, otp_code)
+
     session["pending_otp_user_id"] = user["id"]
     session["pending_otp_email"] = email
 
-    create_otp(user["id"], email)
-
-    log_activity("LOGIN_PASSWORD_OK_2FA_REQUIRED", username=email, details="redirect to verify")
+    log_activity("LOGIN_PASSWORD_OK_2FA_REQUIRED", username=email, details="otp sent and redirect to verify")
     return redirect(url_for("auth.verify"))
 
 
@@ -287,7 +303,6 @@ def register():
     db.close()
 
     log_activity("REGISTER_SUCCESS", username=email)
-
     return redirect(url_for("auth.login"))
 
 
