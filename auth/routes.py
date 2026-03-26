@@ -1,5 +1,3 @@
-# auth/routes.py
-
 from flask import render_template, request, redirect, url_for, session, current_app
 import bcrypt
 from datetime import datetime, timedelta
@@ -17,7 +15,7 @@ LOCK_MINUTES = 15
 
 OTP_EXP_MINUTES = 5
 
-
+###checks how many times a user failed to log in and whether the account is locked
 def get_login_attempt(email: str):
     db = get_db_connection()
     cur = db.cursor(dictionary=True)
@@ -32,7 +30,7 @@ def get_login_attempt(email: str):
     db.close()
     return row
 
-
+###recording amount of failed attempts and locks account if too many fails
 def upsert_fail(email: str):
     db = get_db_connection()
     cur = db.cursor(dictionary=True)
