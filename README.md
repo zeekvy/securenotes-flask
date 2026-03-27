@@ -1,78 +1,144 @@
-SecureNotes Web Application
+# SecureNotes
 
-Description
-SecureNotes is a Flask based web application that allows users to register, log in, and securely manage personal notes. Each user can create, view, and manage their own notes stored in a MySQL database. The system focuses on authentication, access control, and secure data handling.
+> Encrypted personal notes. Private by design.
 
-Features
-• User registration and login
-• Password hashing using Flask Bcrypt
-• Session based authentication
-• Create and view personal notes
-• Notes are isolated per user
-• MySQL database backend
-• Modular Flask structure using Blueprints
-• HTML templates rendered with Jinja2
+A full-stack web application built with Flask and MySQL that lets users securely register, log in, and manage personal notes. Built as a Final Year Project for a BSc (Hons) in Cyber Security, with a focus on applying real-world security practices throughout.
 
-Tech Stack
-• Python
-• Flask
-• Flask Bcrypt
-• MySQL
-• HTML
-• Git and GitHub
+![SecureNotes Login](screenshots/login.png)
 
-Project Structure
-app.py
-Main Flask application entry point.
+---
 
-db.py
-Database connection logic.
+## Features
 
-auth/
-Authentication module.
-Handles login, registration, and logout routes.
+- **User registration & login** — email and password authentication
+- **Two-factor authentication (2FA)** — a 6-digit OTP is emailed on every login before access is granted
+- **Encrypted note storage** — notes are stored in a MySQL database, isolated per user
+- **CSRF protection** — all forms are protected against cross-site request forgery
+- **Automatic session timeout** — idle sessions are expired to prevent unauthorised access
+- **Activity history log** — every login, OTP verification, note creation, update, and deletion is recorded with a timestamp
+- **Content Security Policy (CSP)** — HTTP security headers configured to restrict resource loading
+- **Custom 404 handling** — unauthorised or invalid routes are handled gracefully
+- **Modular structure** — built using Flask Blueprints for clean separation of concerns
 
-notes/
-Notes module.
-Handles creating, listing, and viewing notes.
+---
 
-templates/
-HTML templates for all pages.
+## Screenshots
 
-venv/
-Python virtual environment. Not tracked in Git.
+| Landing Page | Sign In | OTP Verification |
+|---|---|---|
+| ![Landing](screenshots/landing.png) | ![Login](screenshots/login.png) | ![OTP](screenshots/otp.png) |
 
-Setup Instructions
+| Dashboard | Activity History |
+|---|---|
+| ![Dashboard](screenshots/dashboard.png) | ![Activity](screenshots/activity.png) |
 
-Clone repository
-git clone https://github.com/YOUR_USERNAME/securenotes-flask.git
+---
 
-Create virtual environment
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, Flask |
+| Database | MySQL |
+| Auth | Flask-Bcrypt, OTP via email |
+| Frontend | HTML, CSS, Bootstrap, Jinja2 |
+| Security | CSRF tokens, CSP headers, session management |
+| Version Control | Git, GitHub |
+
+---
+
+## Project Structure
+
+```
+securenotes-flask/
+├── app.py              # App entry point and config
+├── db.py               # Database connection
+├── extensions.py       # Flask extensions (bcrypt, etc.)
+├── auth/               # Login, registration, logout, OTP routes
+├── notes/              # Create, view, and manage notes
+├── activity/           # Activity logging and history view
+├── templates/          # Jinja2 HTML templates
+└── static/css/         # Stylesheets
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.x
+- MySQL server running locally
+- A Gmail account (or SMTP provider) for sending OTP emails
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/zeekvy/securenotes-flask.git
+cd securenotes-flask
+```
+
+### 2. Create and activate a virtual environment
+
+```bash
 python -m venv venv
 
-Activate virtual environment
-Windows
+# Windows
 venv\Scripts\activate
 
-Install dependencies
-pip install flask flask-bcrypt mysql-connector-python
+# macOS/Linux
+source venv/bin/activate
+```
 
-Configure database
-Create a MySQL database named securenotes.
-Create required tables for users and notes.
+### 3. Install dependencies
 
-Run application
+```bash
+pip install flask flask-bcrypt mysql-connector-python flask-wtf
+```
+
+### 4. Set up the database
+
+Create a MySQL database named `securenotes` and run the table setup queries. You will need tables for `users`, `notes`, and `activity_log`.
+
+### 5. Configure environment variables
+
+Create a `.env` file or set the following directly in `app.py`:
+
+```
+SECRET_KEY=your-secret-key
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your-db-password
+DB_NAME=securenotes
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-email-app-password
+```
+
+### 6. Run the app
+
+```bash
 python app.py
+```
 
-Open browser
-http://127.0.0.1:5000
-https://localhost
+Then open your browser at `https://localhost` or `http://127.0.0.1:5000`
 
-Security Notes
-• Passwords are stored as bcrypt hashes
-• Sessions use a secret key
-• Users can only access their own notes
-• SQL queries use parameterized statements
+---
 
-Academic Context
-This project is developed as part of a Final Year Project for a Cyber Security degree. It demonstrates secure web application design, authentication mechanisms, and database access control.
+## Security Implementation
+
+| Feature | Implementation |
+|---|---|
+| Password storage | Hashed with bcrypt (no plaintext stored) |
+| Two-factor auth | Time-limited 6-digit OTP sent to registered email |
+| CSRF protection | Token validated on every form POST |
+| Session security | Server-side sessions with automatic timeout |
+| Access control | Users can only access their own notes |
+| SQL injection prevention | Parameterised queries throughout |
+| CSP headers | Restricts scripts, styles, and resources to trusted sources |
+| Audit logging | All key actions logged with activity type and timestamp |
+
+---
+
+## Academic Context
+
+This project was developed as part of a Final Year Project for a BSc (Hons) in Cyber Security at Coventry University. It demonstrates secure web application design principles including authentication, authorisation, input validation, and audit logging.
